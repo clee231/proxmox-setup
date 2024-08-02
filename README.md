@@ -10,3 +10,4 @@ This playbook assumes that you have SSH access to each node.
 - Install neovim
 - Join Proxmox network
 - Switch Proxmox Cluster Network to Hi-speed network
+- Run PVE Post Install Script
