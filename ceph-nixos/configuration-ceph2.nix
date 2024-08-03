@@ -44,12 +44,6 @@
     ];
   };
 
-  # Create 'ceph' user
-  users.users.ceph = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "ceph" ];
-  };
-
   # Setup ceph
   services.ceph = {
     enable = true;
