@@ -72,7 +72,6 @@
       enable = true;
       daemons = ["ceph2"];
     };
-    };
   };
 
   system.stateVersion = "24.05";
