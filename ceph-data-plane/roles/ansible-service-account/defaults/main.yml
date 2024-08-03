@@ -1,0 +1,6 @@
+---
+# defaults file for ansible-service-account
+username: ansible
+groupname: ansible
+home: /opt/ansible
+shell: /bin/bash

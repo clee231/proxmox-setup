@@ -1,0 +1,29 @@
+---
+- hosts: all
+  tasks:
+    - name: Update system
+      become: true
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install neovim
+      become: true
+      apt:
+        name: neovim
+        state: present
+
+  roles:
+    - role: ansible-service-account
+      become: true
+    - role: docker
+    - role: stackhpc.cephadm.cephadm
+      vars:
+        cephadm_ceph_release: reef
+        cephadm_enable_dashboard: true
+        cephadm_enable_firewalld: true
+        cephadm_ssh_user: ansible
+        cephadm_osd_devices:
+          - /dev/sda
+        cephadm_public_interface: "{{ ansible_default_ipv4.interface }}"
+        cephadm_public_network: "{{ ansible_default_ipv4.network }}"
