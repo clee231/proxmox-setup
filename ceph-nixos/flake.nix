@@ -42,11 +42,25 @@
         ];
       };
 
-      nixosConfigurations.ceph-nixos = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.ceph1 = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
-          ./configuration.nix
+          ./configuration-ceph1.nix
+        ];
+      };
+      nixosConfigurations.ceph2 = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          ./configuration-ceph2.nix
+        ];
+      };
+      nixosConfigurations.ceph3 = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          ./configuration-ceph3.nix
         ];
       };
     };
