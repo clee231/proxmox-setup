@@ -52,6 +52,7 @@
 
   # Setup ceph
   services.ceph = {
+    enable = true;
     global = {
       fsid = "4fca2926-9187-4e29-ab50-6571df488f9d";
       clusterName = "cephfs";
