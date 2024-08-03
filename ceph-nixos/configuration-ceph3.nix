@@ -27,6 +27,7 @@
     pkgs.gitMinimal
     pkgs.neovim
     pkgs.ceph-client
+    pkgs.python3
   ];
 
   users.users.root.openssh.authorizedKeys.keys = [
