@@ -45,6 +45,10 @@
     ];
   };
 
+  # Don't require password for sudo
+  security.sudo.wheelNeedsPassword = false;
+
+
   # Setup ceph
   services.ceph = {
     enable = true;
