@@ -26,6 +26,7 @@
     pkgs.curl
     pkgs.gitMinimal
     pkgs.neovim
+    pkgs.ceph-client
   ];
 
   users.users.root.openssh.authorizedKeys.keys = [
