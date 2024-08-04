@@ -74,7 +74,7 @@
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Generate the monitor map for the hosts
-  command: monmaptool --create --add {{ ansible_hostname }} {{ ansible_default_ipv4.address }} --fsid {{ fsid.stdout.split('=')[1] }} /tmp/monmap
+  command: monmaptool --create --clobber --add {{ ansible_hostname }} {{ ansible_default_ipv4.address }} --fsid {{ fsid.stdout.split('=')[1] }} /tmp/monmap
   args:
     creates: /tmp/monmap
   delegate_to: "{{ groups['mons'][0] }}"
@@ -98,3 +98,13 @@
   delegate_to: "{{ groups['mons'][0] }}"
   when:
     - inventory_hostname in groups["mons"]
+
+- name: Copy ceph.mon.keyring to the monitor data directory
+  become: true
+  copy:
+    src: /tmp/ceph.mon.keyring
+    dest: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+    owner: ceph
+    group: ceph
+    mode: 0600
+  delegate_to: "{{ groups['mons'][0] }}"
