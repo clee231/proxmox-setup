@@ -1,0 +1,100 @@
+---
+# tasks file for init-ceph
+
+- name: Check if ceph is installed
+  command: ceph --version
+  register: ceph_installed
+
+# This task makes an assumption that the ceph.conf is populated by the nixos setup
+- name: Retrieve the fsid from /etc/ceph/ceph.conf
+  command: grep fsid /etc/ceph/ceph.conf
+  register: fsid
+
+- name: Retrieve the cluster name from /etc/ceph/ceph.conf
+  command: grep "cluster name" /etc/ceph/ceph.conf
+  register: cluster_name
+
+- name: Generate monitor keyring
+  become: true
+  command: ceph-authtool --create-keyring /tmp/ceph.mon.keyring --gen-key -n mon.{{ ansible_hostname }} --cap mon 'allow *'
+  args:
+    creates: /tmp/ceph.mon.keyring
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Allow writing to the monitor keyring
+  become: true
+  file:
+    path: /tmp/ceph.mon.keyring
+    owner: root
+    group: root
+    mode: 0600
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Generate client.admin keyring
+  become: true
+  command: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
+  args:
+    creates: /etc/ceph/ceph.client.admin.keyring
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Create bootstrap-osd folder
+  become: true
+  file:
+    path: /var/lib/ceph/bootstrap-osd
+    state: directory
+    owner: ceph
+    group: ceph
+    mode: 0755
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Generate bootstrap-osd keyring
+  become: true
+  command: ceph-authtool --create-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd' --cap mgr 'allow r'
+  args:
+    creates: /var/lib/ceph/bootstrap-osd/ceph.keyring
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Add the client.admin generated keys to the ceph.mon.keyring
+  become: true
+  command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Add the bootstrap-osd key to the ceph.mon.keyring
+  become: true
+  command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Update the ownership of the ceph.mon.keyring
+  become: true
+  file:
+    path: /tmp/ceph.mon.keyring
+    owner: ceph
+    group: ceph
+    mode: 0600
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Generate the monitor map for the hosts
+  command: monmaptool --create --add {{ ansible_hostname }} {{ ansible_default_ipv4.address }} --fsid {{ fsid.stdout.split('=')[1] }} /tmp/monmap
+  args:
+    creates: /tmp/monmap
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Create the default data directory for monitor hosts
+  become: true
+  file:
+    path: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
+    state: directory
+    owner: ceph
+    group: ceph
+    mode: 0755
+  when:
+    - inventory_hostname in groups["mons"]
+
+- name: Populate the monitor daemons with the monitor map and keyring
+  become: true
+  command: ceph-mon --mkfs -i {{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring
+  args:
+    creates: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/store.db
+  delegate_to: "{{ groups['mons'][0] }}"
+  when:
+    - inventory_hostname in groups["mons"]

@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+
+  roles:
+    - role: init-ceph

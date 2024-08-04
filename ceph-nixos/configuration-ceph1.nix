@@ -26,7 +26,7 @@
     pkgs.curl
     pkgs.gitMinimal
     pkgs.neovim
-    pkgs.ceph-client
+    pkgs.ceph
     pkgs.python3
   ];
 
