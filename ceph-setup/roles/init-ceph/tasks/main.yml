@@ -92,7 +92,7 @@
 
 - name: Populate the monitor daemons with the monitor map and keyring
   become: true
-  command: ceph-mon --mkfs -i {{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring
+  command: ceph-mon --mkfs -i {{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring --mon-data /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
   args:
     creates: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/store.db
   delegate_to: "{{ groups['mons'][0] }}"
