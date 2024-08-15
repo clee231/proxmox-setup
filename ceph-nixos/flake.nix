@@ -2,8 +2,9 @@
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   inputs.disko.url = "github:nix-community/disko";
   inputs.disko.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.nix-serve-ng.url = "github:aristanetworks/nix-serve-ng";
 
-  outputs = { nixpkgs, disko, ... }:
+  outputs = { nixpkgs, disko, nix-serve-ng, ... }:
     {
       nixosConfigurations.hetzner-cloud = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
@@ -61,6 +62,14 @@
         modules = [
           disko.nixosModules.disko
           ./configuration-ceph3.nix
+        ];
+      };
+      nixosConfigurations.nixcache = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+	  nix-serve-ng.nixosModules.default
+          ./configuration-nixcache.nix
         ];
       };
     };
