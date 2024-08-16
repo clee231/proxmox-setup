@@ -64,7 +64,7 @@
     enable = true;
     global = {
       fsid = "4fca2926-9187-4e29-ab50-6571df488f9d";
-      clusterName = "cephfs";
+      clusterName = "ceph";
       publicNetwork = "192.168.1.0/24";
       monInitialMembers = "192.168.1.2, 192.168.1.3, 192.168.1.4";
       monHost = "192.168.1.2, 192.168.1.3, 192.168.1.4";
