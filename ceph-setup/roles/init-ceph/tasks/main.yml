@@ -19,6 +19,7 @@
   command: ceph-authtool --create-keyring /tmp/ceph.mon.keyring --gen-key -n mon.{{ ansible_hostname }} --cap mon 'allow *'
   args:
     creates: /tmp/ceph.mon.keyring
+  when: inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Generate client.admin keyring
@@ -26,6 +27,7 @@
   command: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
   args:
     creates: /etc/ceph/ceph.client.admin.keyring
+  when: inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Create bootstrap-osd folder
@@ -43,6 +45,7 @@
   command: ceph-authtool --create-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd' --cap mgr 'allow r'
   args:
     creates: /var/lib/ceph/bootstrap-osd/ceph.keyring
+  when: inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Check if ceph.mon.keyring exists
@@ -53,13 +56,17 @@
 - name: Add the client.admin generated keys to the ceph.mon.keyring
   become: true
   command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
-  when: ceph_mon_keyring.stat.exists == False
+  when:
+    - ceph_mon_keyring.stat.exists == False
+    - inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Add the bootstrap-osd key to the ceph.mon.keyring
   become: true
   command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
-  when: ceph_mon_keyring.stat.exists == False
+  when:
+    - ceph_mon_keyring.stat.exists == False
+    - inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Update the ownership of the ceph.mon.keyring
@@ -69,12 +76,14 @@
     owner: ceph
     group: ceph
     mode: 0600
+  when: inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Generate the monitor map for the hosts
   command: monmaptool --create --add {{ ansible_hostname }} {{ ansible_default_ipv4.address }} --fsid {{ fsid.stdout.split('=')[1] }} /tmp/monmap
   args:
     creates: /tmp/monmap
+  when: inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Create the default data directory for monitor hosts
@@ -88,13 +97,25 @@
   when:
     - inventory_hostname in groups["mons"]
 
+- name: Syncronize ceph.mon.keyring to the other nodes
+  become: true
+  synchronize:
+    src: /tmp/ceph.mon.keyring
+    dest: /tmp/ceph.mon.keyring
+    mode: push
+    owner: true
+    group: true
+    set_remote_user: false
+  when:
+    - inventory_hostname != groups["mons"][0]
+  delegate_to: "{{ groups['mons'][0] }}"
+
 - name: Populate the monitor daemons with the monitor map and keyring
   become: true
   become_user: ceph
   command: ceph-mon --mkfs -i {{ ansible_hostname }} --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring
   args:
     creates: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/store.db
-  delegate_to: "{{ groups['mons'][0] }}"
   when:
     - inventory_hostname in groups["mons"]
 
@@ -107,6 +128,19 @@
     owner: ceph
     group: ceph
     mode: 0600
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Syncronize ceph.mon.keyring to the monitor data directory on the other nodes
+  become: true
+  synchronize:
+    src: /tmp/ceph.mon.keyring
+    dest: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+    mode: push
+    owner: true
+    group: true
+    set_remote_user: false
+  when:
+    - inventory_hostname != groups["mons"][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Restart ceph-mon-{{ ansible_hostname }}
@@ -130,6 +164,18 @@
     owner: ceph
     group: ceph
     mode: 0755
+
+- name: Syncronize ceph.mgr.{{ ansible_hostname }}.keyring to the other nodes
+  become: true
+  synchronize:
+    src: /etc/ceph/ceph.mgr.{{ ansible_hostname }}.keyring
+    dest: /etc/ceph/ceph.mgr.{{ ansible_hostname }}.keyring
+    mode: push
+    owner: true
+    group: true
+    set_remote_user: false
+  when:
+    - inventory_hostname != groups["mgrs"][0]
   delegate_to: "{{ groups['mgrs'][0] }}"
 
 - name: Copy mgr keyring to /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
