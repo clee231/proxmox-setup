@@ -3,4 +3,5 @@
   tasks:
 
   roles:
+    - role: internode-ssh
     - role: init-ceph

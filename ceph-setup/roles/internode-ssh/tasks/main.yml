@@ -1,0 +1,16 @@
+---
+# tasks file for internode-ssh
+
+- name: Create $HOME/.ssh directory
+  file:
+    path: /home/{{ ansible_user }}/.ssh
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: 0700
+
+- name: Copy the ssh key to the remote host
+  copy:
+    src: "{{ ssh_key }}"
+    dest: /home/{{ ansible_user }}/.ssh/id_ed25519
+    owner: "{{ ansible_user }}"
+    mode: 0600
