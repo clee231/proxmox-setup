@@ -1,0 +1,5 @@
+# Ignore ceph files pulled from the nodes
+ceph.client.admin.keyring
+ceph.mon.keyring
+monmap
+
