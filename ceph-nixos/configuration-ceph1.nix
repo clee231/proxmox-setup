@@ -87,5 +87,8 @@
     };
   };
 
+  # Set up firewall exceptions
+  networking.firewall.allowedTCPPorts = [ 22 6789 ];
+
   system.stateVersion = "24.05";
 }

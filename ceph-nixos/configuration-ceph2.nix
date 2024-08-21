@@ -59,11 +59,8 @@
     ];
   };
 
-
-
   # Don't require password for sudo
   security.sudo.wheelNeedsPassword = false;
-
 
   # Setup ceph
   services.ceph = {
@@ -89,6 +86,9 @@
       daemons = ["ceph2"];
     };
   };
+
+  # Set up firewall exceptions
+  networking.firewall.allowedTCPPorts = [ 22 6789 ];
 
   system.stateVersion = "24.05";
 }
