@@ -16,6 +16,7 @@
 
 - name: Generate monitor keyring
   become: true
+  become_user: ceph
   command: ceph-authtool --create-keyring /tmp/ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
   args:
     creates: /tmp/ceph.mon.keyring
@@ -24,6 +25,7 @@
 
 - name: Generate client.admin keyring
   become: true
+  become_user: ceph
   command: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
   args:
     creates: /etc/ceph/ceph.client.admin.keyring
@@ -42,6 +44,7 @@
 
 - name: Generate bootstrap-osd keyring
   become: true
+  become_user: ceph
   command: ceph-authtool --create-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd' --cap mgr 'allow r'
   args:
     creates: /var/lib/ceph/bootstrap-osd/ceph.keyring
@@ -53,19 +56,30 @@
     path: /tmp/ceph.mon.keyring
   register: ceph_mon_keyring
 
+- name: Check if ceph.mon.keyring already contains the client.admin key
+  become: true
+  become_user: ceph
+  command: cat /tmp/ceph.mon.keyring
+  register: ceph_mon_keyring_contents
+  delegate_to: "{{ groups['mons'][0] }}"
+
 - name: Add the client.admin generated keys to the ceph.mon.keyring
   become: true
+  become_user: ceph
   command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
   when:
-    - ceph_mon_keyring.stat.exists == False
+    - ceph_mon_keyring.stat.exists == True
+    - ceph_mon_keyring_contents.stdout.find('client.admin') == -1
     - inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Add the bootstrap-osd key to the ceph.mon.keyring
   become: true
+  become_user: ceph
   command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
   when:
-    - ceph_mon_keyring.stat.exists == False
+    - ceph_mon_keyring.stat.exists == True
+    - ceph_mon_keyring_contents.stdout.find('client.bootstrap-osd') == -1
     - inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
@@ -80,6 +94,8 @@
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Generate the monitor map for the first monitor
+  become: true
+  become_user: ceph
   command: monmaptool --create --add {{ ansible_hostname }} {{ ansible_default_ipv4.address }} --fsid {{ fsid.stdout.split('=')[1] }} /tmp/monmap
   args:
     creates: /tmp/monmap
@@ -92,10 +108,22 @@
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Add the rest of the monitors to the monitor map
+  become: true
+  become_user: ceph
   command: monmaptool --add {{ ansible_hostname }} {{ ansible_default_ipv4.address }} --fsid {{ fsid.stdout.split('=')[1] }} /tmp/monmap
   when:
     - inventory_hostname != groups['mons'][0]
     - monmap_check.stdout.find(ansible_hostname) == -1
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Update the ownership of the monmap
+  become: true
+  file:
+    path: /tmp/monmap
+    owner: ceph
+    group: ceph
+    mode: 0644
+  when: inventory_hostname == groups['mons'][0]
   delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Fetch the monmap from the first monitor
@@ -117,16 +145,16 @@
   when:
     - inventory_hostname != groups["mons"][0]
 
-- name: Create the default data directory for monitor hosts
-  become: true
-  file:
-    path: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
-    state: directory
-    owner: ceph
-    group: ceph
-    mode: 0755
-  when:
-    - inventory_hostname in groups["mons"]
+#- name: Create the default data directory for monitor hosts
+#  become: true
+#  file:
+#    path: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
+#    state: directory
+#    owner: ceph
+#    group: ceph
+#    mode: 0755
+#  when:
+#    - inventory_hostname in groups["mons"]
 
 - name: Fetch the ceph.client.admin.keyring from the first monitor
   become: true
@@ -181,15 +209,15 @@
   when:
     - inventory_hostname in groups["mons"]
 
-- name: Copy ceph.mon.keyring to the monitor data directory
-  become: true
-  copy:
-    src: /tmp/ceph.mon.keyring
-    remote_src: true
-    dest: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
-    owner: ceph
-    group: ceph
-    mode: 0600
+#- name: Copy ceph.mon.keyring to the monitor data directory
+#  become: true
+#  copy:
+#    src: /tmp/ceph.mon.keyring
+#    remote_src: true
+#    dest: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+#    owner: ceph
+#    group: ceph
+#    mode: 0600
 
 - name: Reset failed systemctl services
   become: true
