@@ -145,17 +145,6 @@
   when:
     - inventory_hostname != groups["mons"][0]
 
-#- name: Create the default data directory for monitor hosts
-#  become: true
-#  file:
-#    path: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
-#    state: directory
-#    owner: ceph
-#    group: ceph
-#    mode: 0755
-#  when:
-#    - inventory_hostname in groups["mons"]
-
 - name: Fetch the ceph.client.admin.keyring from the first monitor
   become: true
   fetch:
@@ -209,16 +198,6 @@
   when:
     - inventory_hostname in groups["mons"]
 
-#- name: Copy ceph.mon.keyring to the monitor data directory
-#  become: true
-#  copy:
-#    src: /tmp/ceph.mon.keyring
-#    remote_src: true
-#    dest: /var/lib/ceph/mon/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
-#    owner: ceph
-#    group: ceph
-#    mode: 0600
-
 - name: Reset failed systemctl services
   become: true
   command: systemctl reset-failed
@@ -229,64 +208,33 @@
     name: ceph-mon-{{ ansible_hostname }}
     state: restarted
 
-#- name: Create key for mgr daemon
-#  become: true
-#  command: ceph-authtool --create-keyring /etc/ceph/ceph.mgr.keyring --gen-key -n mgr.{{ ansible_hostname }} --cap mon 'allow profile mgr' --cap osd 'allow *' --cap mds 'allow *'
-#  args:
-#    creates: /etc/ceph/ceph.mgr.keyring
-#  when: inventory_hostname == groups['mgrs'][0]
-#  delegate_to: "{{ groups['mgrs'][0] }}"
-#
-#- name: Add the other mgr nodes to the mgr keyring
-#  become: true
-#  command: ceph-authtool /etc/ceph/ceph.mgr.keyring --gen-key -n mgr.{{ ansible_hostname }} --cap mon 'allow profile mgr' --cap osd 'allow *' --cap mds 'allow *'
-#  when:
-#    - inventory_hostname != groups["mgrs"][0]
-#  delegate_to: "{{ groups['mgrs'][0] }}"
-#
-#- name: Fetch the mgr keyring from the first mgr node
-#  become: true
-#  fetch:
-#    src: /etc/ceph/ceph.mgr.keyring
-#    dest: "{{ playbook_dir }}/ceph.mgr.keyring"
-#    flat: yes
-#  when:
-#    - inventory_hostname == groups["mgrs"][0]
-#  delegate_to: "{{ groups['mgrs'][0] }}"
-#
-#- name: Create the /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} directory
-#  become: true
-#  file:
-#    path: /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
-#    state: directory
-#    owner: ceph
-#    group: ceph
-#    mode: 0755
-#
-#- name: Copy ceph.mgr.keyring to the other nodes
-#  become: true
-#  copy:
-#    src: "{{ playbook_dir }}/ceph.mgr.keyring"
-#    remote_src: false
-#    dest: /etc/ceph/ceph.mgr.keyring
-#    owner: ceph
-#    group: ceph
-#    mode: 0600
-#  when:
-#    - inventory_hostname != groups["mgrs"][0]
-#
-#- name: Copy mgr keyring to /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
-#  become: true
-#  copy:
-#    src: /etc/ceph/ceph.mgr.keyring
-#    remote_src: true
-#    dest: /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
-#    owner: ceph
-#    group: ceph
-#    mode: 0600
-#
-#- name: Restart ceph-mgr-{{ ansible_hostname }}
-#  become: true
-#  service:
-#    name: ceph-mgr-{{ ansible_hostname }}
-#    state: restarted
+- name: Create key for mgr daemon
+  become: true
+  command: ceph auth get-or-create mgr.{{ ansible_hostname }} osd 'allow *' mds 'allow *' mon 'allow profile mgr'
+  register: ceph_mgr_key
+
+- name: Create the /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} directory
+  become: true
+  file:
+    path: /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
+    state: directory
+    owner: ceph
+    group: ceph
+    mode: 0755
+
+- name: Write the mgr key to /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+  become: true
+  become_user: ceph
+  copy:
+    content: "{{ ceph_mgr_key.stdout }}\n"
+    dest: /var/lib/ceph/mgr/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+    owner: ceph
+    group: ceph
+    mode: 0600
+
+- name: Restart ceph-mgr-{{ ansible_hostname }}
+  become: true
+  service:
+    name: ceph-mgr-{{ ansible_hostname }}
+    state: restarted
+
