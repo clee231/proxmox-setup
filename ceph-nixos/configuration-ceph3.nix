@@ -75,7 +75,7 @@
 
     osd = {
       enable = true;
-      daemons = ["2"];
+      daemons = ["3"];
     };
     mon = {
       enable = true;
