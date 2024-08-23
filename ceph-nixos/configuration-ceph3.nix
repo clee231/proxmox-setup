@@ -75,13 +75,17 @@
 
     osd = {
       enable = true;
-      daemons = ["ceph3"];
+      daemons = ["2"];
     };
     mon = {
       enable = true;
       daemons = ["ceph3"];
     };
     mgr = {
+      enable = true;
+      daemons = ["ceph3"];
+    };
+    mds = {
       enable = true;
       daemons = ["ceph3"];
     };
