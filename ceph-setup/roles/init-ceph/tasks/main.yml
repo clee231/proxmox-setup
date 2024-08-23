@@ -40,7 +40,6 @@
     owner: ceph
     group: ceph
     mode: 0755
-  delegate_to: "{{ groups['mons'][0] }}"
 
 - name: Generate bootstrap-osd keyring
   become: true
@@ -238,3 +237,91 @@
     name: ceph-mgr-{{ ansible_hostname }}
     state: restarted
 
+- name: Fetch the bootstrap-osd keyring from the first monitor
+  become: true
+  fetch:
+    src: /var/lib/ceph/bootstrap-osd/ceph.keyring
+    dest: "{{ playbook_dir }}/ceph.bootstrap-osd.keyring"
+    flat: yes
+  when:
+    - inventory_hostname == groups["mons"][0]
+  delegate_to: "{{ groups['mons'][0] }}"
+
+- name: Copy bootstrap-osd keyring to the other nodes
+  become: true
+  copy:
+    src: "{{ playbook_dir }}/ceph.bootstrap-osd.keyring"
+    remote_src: false
+    dest: /var/lib/ceph/bootstrap-osd/ceph.keyring
+    owner: ceph
+    group: ceph
+    mode: 0600
+  when:
+    - inventory_hostname != groups["mons"][0]
+
+- name: Get current ceph-volume lvm inventory
+  become: true
+  command: ceph-volume lvm list
+  register: ceph_volume_lvm
+  ignore_errors: true
+
+- name: Create ceph volume
+  become: true
+  command: ceph-volume lvm create --data {{ osd_device }} --no-systemd
+  args:
+    creates: /var/lib/ceph/osd/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+  when:
+    - inventory_hostname in groups["osds"]
+    - ceph_volume_lvm.stdout.find(osd_device) == -1
+
+- name: Get updated ceph-volume lvm inventory
+  become: true
+  command: ceph-volume lvm list
+  register: ceph_volume_lvm
+  ignore_errors: true
+
+- name: Retrieve the osd id from the ceph-volume lvm inventory
+  debug:
+    msg: "{{ ceph_volume_lvm.stdout | regex_findall('osd id[\\s]+([0-9]+)', '\\1') | first }}"
+
+#- name: Symlink the ceph-osd data directory for systemd service
+#  become: true
+#  file:
+#    src: "/var/lib/ceph/osd/{{ cluster_name.stdout.split('=')[1] }}-{{ ceph_volume_lvm.stdout | regex_findall('osd id[\\s]+([0-9]+)', '\\1') | first }}"
+#    dest: /var/lib/ceph/osd/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
+#    state: link
+#    owner: ceph
+#    group: ceph
+#  when:
+#    - inventory_hostname in groups["osds"]
+#    - ceph_volume_lvm.stdout.find(osd_device) != -1
+
+- name: Restart ceph-osd-{{ ansible_hostname }}
+  become: true
+  service:
+    name: ceph-osd-{{ ansible_hostname }}
+    state: restarted
+
+- name: Create the /var/lib/ceph/mds/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} directory
+  become: true
+  file:
+    path: /var/lib/ceph/mds/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}
+    state: directory
+    owner: ceph
+    group: ceph
+    mode: 0755
+
+- name: Create the mds key in /var/lib/ceph/mds/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+  become: true
+  become_user: ceph
+  command: ceph-authtool --create-keyring /var/lib/ceph/mds/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring --gen-key -n mds.{{ ansible_hostname }} --cap mds 'allow' --cap osd 'allow rwx' --cap mon 'allow profile mds'
+  args:
+    creates: /var/lib/ceph/mds/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
+  when:
+    - inventory_hostname in groups["mds"]
+
+- name: Restart ceph-mds-{{ ansible_hostname }}
+  become: true
+  service:
+    name: ceph-mds-{{ ansible_hostname }}
+    state: restarted
