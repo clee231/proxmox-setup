@@ -267,7 +267,7 @@
 
 - name: Create ceph volume
   become: true
-  command: ceph-volume lvm create --data {{ osd_device }} --no-systemd
+  command: ceph-volume lvm create --data {{ osd_device }} --no-systemd --osd-id {{ ansible_hostname[-1] }}
   args:
     creates: /var/lib/ceph/osd/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }}/keyring
   when:
@@ -296,10 +296,11 @@
 #    - inventory_hostname in groups["osds"]
 #    - ceph_volume_lvm.stdout.find(osd_device) != -1
 
-- name: Restart ceph-osd-{{ ansible_hostname }}
+  # TODO: This type of string splitting only works for numbers less than 10
+- name: Restart ceph-osd-{{ ansible_hostname[-1] }}
   become: true
   service:
-    name: ceph-osd-{{ ansible_hostname }}
+    name: ceph-osd-{{ ansible_hostname[-1] }}
     state: restarted
 
 - name: Create the /var/lib/ceph/mds/{{ cluster_name.stdout.split('=')[1] }}-{{ ansible_hostname }} directory
