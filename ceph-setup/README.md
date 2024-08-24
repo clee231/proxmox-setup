@@ -35,3 +35,17 @@ For example, to communicate with the mon daemons:
 ```bash
 sudo ceph daemon mon.ceph1 mon_status
 ```
+
+### Getting the cluster health
+
+To get the cluster health, run the following command:
+
+```bash
+sudo ceph health
+```
+
+For more specific details, run the following command:
+
+```bash
+sudo ceph health detail
+```
