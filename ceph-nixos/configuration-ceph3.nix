@@ -70,7 +70,7 @@
       clusterName = "ceph";
       publicNetwork = "192.168.1.0/24";
       monInitialMembers = "ceph1, ceph2, ceph3";
-      monHost = "192.168.1.2, 192.168.1.3, 192.168.1.4";
+      monHost = "[v2:192.168.1.2:3300,v1:192.168.1.2:6789],[v2:192.168.1.3:3300,v1:192.168.1.3:6789],[v2:192.168.1.4:3300,v1:192.168.1.4:6789]";
     };
 
     osd = {
@@ -92,7 +92,7 @@
   };
 
   # Set up firewall exceptions
-  networking.firewall.allowedTCPPorts = [ 22 6789 ];
+  networking.firewall.allowedTCPPorts = [ 22 6789 3300 ];
 
   system.stateVersion = "24.05";
 }
