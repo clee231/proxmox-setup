@@ -265,6 +265,18 @@
   register: ceph_volume_lvm
   ignore_errors: true
 
+#- name: Get lvm volume group data
+#  become: true
+#  command: vgdisplay
+#  register: vgdisplay
+#
+#- name: Wipe osd disks if not in ceph-volume lvm inventory
+#  become: true
+#  command: vgdestory {{ vgdispaly.stdout | regex_findall('(ceph-[0-9a-f-]+)', '\\1') | first }}
+#  when:
+#    - inventory_hostname in groups["osds"]
+#    - ceph_volume_lvm.stdout.find(osd_device) == -1
+
 - name: Create ceph volume
   become: true
   command: ceph-volume lvm create --data {{ osd_device }} --no-systemd --osd-id {{ ansible_hostname[-1] }}
@@ -326,3 +338,9 @@
   service:
     name: ceph-mds-{{ ansible_hostname }}
     state: restarted
+
+- name: Security - Disable insecure global id reclaim policy
+  become: true
+  command: ceph config set mon auth_allow_insecure_global_id_reclaim false
+  when:
+    - inventory_hostname == groups['mons'][0]
