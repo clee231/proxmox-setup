@@ -25,3 +25,13 @@ If the OSD data directory is empty after a reboot, you may need to rebuild the m
 sudo ceph-volume lvm activate --all --no-systemd
 sudo systemctl restart ceph-osd-<osd_id>
 ```
+
+### ceph command not responding or timeout
+
+If you are running ceph commands and they are not responding, see if you can communicate directly with the ceph daemons to get status.
+
+For example, to communicate with the mon daemons:
+
+```bash
+sudo ceph daemon mon.ceph1 mon_status
+```
