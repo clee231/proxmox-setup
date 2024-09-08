@@ -1,0 +1,44 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    name: ''
+    namespace: traefik
+    server: 'https://kubernetes.default.svc'
+  sources:
+    - repoURL: 'https://traefik.github.io/charts'
+      targetRevision: 24.0.0
+      chart: traefik
+      helm:
+        parameters:
+          - name: ingressRoute.dashboard.matchRule
+            value: >-
+              (Host(`traefik.anibase02.chase.ninja`) && PathPrefix(`/dashboard`)) ||
+              (Host(`traefik.anibase02.chase.ninja`) && PathPrefix(`/api`))
+          - name: ingressRoute.dashboard.entryPoints[0]
+            value: websecure
+          - name: service.type
+            value: NodePort
+          - name: service.externalIPs[0]
+            value: '192.168.1.5'
+          - name: service.externalIPs[1]
+            value: '192.168.1.6'
+          - name: service.externalIPs[2]
+            value: '192.168.1.7'
+    - path: manage-cluster/argo/traefik
+      repoURL: 'git@github.com:clee231/proxmox-setup.git'
+      targetRevision: HEAD
+      directory:
+        recurse: true
+        include: '*.yml'
+        exclude: config.yml
+  project: system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
