@@ -1,0 +1,12 @@
+---
+ingressRoute:
+  dashboard:
+    enabled: true
+    entryPoints: ["websecure"]
+
+service:
+  type: NodePort
+  externalIPs:
+    - 192.168.1.5
+    - 192.168.1.6
+    - 192.168.1.7

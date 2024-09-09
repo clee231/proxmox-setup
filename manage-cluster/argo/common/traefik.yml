@@ -14,21 +14,8 @@ spec:
       targetRevision: 31.0.0
       chart: traefik
       helm:
-        parameters:
-          - name: ingressRoute.dashboard.matchRule
-            value: >-
-              (Host(`traefik.anibase02.chase.ninja`) && PathPrefix(`/dashboard`)) ||
-              (Host(`traefik.anibase02.chase.ninja`) && PathPrefix(`/api`))
-          - name: ingressRoute.dashboard.entryPoints[0]
-            value: websecure
-          - name: service.type
-            value: NodePort
-          - name: service.externalIPs[0]
-            value: '192.168.1.5'
-          - name: service.externalIPs[1]
-            value: '192.168.1.6'
-          - name: service.externalIPs[2]
-            value: '192.168.1.7'
+        valueFiles:
+          - $values/manage-cluster/argo/traefik/values.yml
     - path: manage-cluster/argo/traefik
       repoURL: 'git@github.com:clee231/proxmox-setup.git'
       targetRevision: HEAD
