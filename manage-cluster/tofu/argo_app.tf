@@ -9,6 +9,7 @@ resource "kubernetes_manifest" "manage_cluster_app" {
     "spec" = {
       "destination" = {
         "server" = "https://kubernetes.default.svc"
+	"namespace" = kubernetes_namespace.argocd.metadata[0].name
       }
       "source" = {
         "path" = "manage-cluster/argo/common"
