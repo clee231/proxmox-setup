@@ -19,10 +19,11 @@ spec:
     - path: manage-cluster/argo/traefik
       repoURL: 'git@github.com:clee231/proxmox-setup.git'
       targetRevision: HEAD
+      ref: values
       directory:
         recurse: true
         include: '*.yml'
-        exclude: config.yml
+        exclude: values.yml
   project: system
   syncPolicy:
     automated:
