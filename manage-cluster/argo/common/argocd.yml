@@ -1,0 +1,31 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: argocd
+    server: 'https://kubernetes.default.svc'
+  sources:
+    - repoURL: 'https://argoproj.github.io/argo-helm'
+      targetRevision: 7.5.2
+      chart: argo-cd
+      helm:
+        valueFiles:
+          - $values/manage-cluster/argo/argocd/values.yml
+    - path: manage-cluster/argo/argocd
+      repoURL: 'git@github.com:clee231/proxmox-setup.git'
+      targetRevision: HEAD
+      ref: values
+      directory:
+        recurse: true
+        include: '*.yml'
+        exclude: values.yml
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
