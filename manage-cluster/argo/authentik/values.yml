@@ -1,0 +1,26 @@
+---
+authentik:
+  postgresql:
+    host: postgres
+    user: file:///postgres-creds/username
+    password: file:///postgres-creds/password
+redis:
+  enabled: true
+server:
+  volumes:
+    - name: postgres-creds
+      secret:
+        secretName: authentik-postgres-credentials
+  volumeMounts:
+    - name: postgres-creds
+      mountPath: /postgres-creds
+      readOnly: true
+worker:
+  volumes:
+    - name: postgres-creds
+      secret:
+        secretName: authentik-postgres-credentials
+  volumeMounts:
+    - name: postgres-creds
+      mountPath: /postgres-creds
+      readOnly: true
