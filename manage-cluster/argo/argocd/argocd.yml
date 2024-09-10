@@ -9,7 +9,7 @@ spec:
     - websecure
   routes:
   - kind: Rule
-    match: Host(`traefik.anibase02.chase.ninja`)
+    match: Host(`cd-anibase02.chase.ninja`)
     priority: 10
     services:
     - kind: Service
