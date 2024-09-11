@@ -1,25 +1,41 @@
 ---
 authentik:
+  secret_key: "qSQ:ah^7xRduAFv;9spb5-]6[Vm3nzkKwr&*(}+WDLj%!B?<t{"
+  error_reporting:
+    enabled: true
   postgresql:
-    host: postgres
     user: file:///postgres-creds/username
     password: file:///postgres-creds/password
-redis:
-  enabled: true
+
 server:
+  ingress:
+    enabled: true
+    hosts:
+      - auth-anibase02.chase.ninja
+      - auth.anibase02.chase.ninja
+      - auth.chase.ninja
   volumes:
     - name: postgres-creds
       secret:
-        secretName: authentik-postgres-credentials
+        secretName: postgres-creds
   volumeMounts:
     - name: postgres-creds
       mountPath: /postgres-creds
       readOnly: true
+
+postgresql:
+  enabled: true
+  auth:
+    existingSecret: postgres-creds
+
+redis:
+  enabled: true
+
 worker:
   volumes:
     - name: postgres-creds
       secret:
-        secretName: authentik-postgres-credentials
+        secretName: postgres-creds
   volumeMounts:
     - name: postgres-creds
       mountPath: /postgres-creds
