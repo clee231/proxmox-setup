@@ -10,9 +10,9 @@ spec:
     namespace: authentik
     server: 'https://kubernetes.default.svc'
   sources:
-    - repoURL: 'https://charts.goauthentik.io/goauthentik'
+    - repoURL: 'https://charts.goauthentik.io'
       targetRevision: 2024.8.1
-      chart: authentik
+      chart: goauthentik/authentik
       helm:
         valueFiles:
           - $values/manage-cluster/argo/authentik/values.yml
