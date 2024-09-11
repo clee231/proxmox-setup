@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: 'https://charts.goauthentik.io'
       targetRevision: 2024.8.1
-      chart: goauthentik/authentik
+      chart: authentik/authentik
       helm:
         valueFiles:
           - $values/manage-cluster/argo/authentik/values.yml
