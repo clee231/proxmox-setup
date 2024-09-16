@@ -4,8 +4,7 @@ authentik:
   error_reporting:
     enabled: true
   postgresql:
-    user: file:///postgres-creds/username
-    password: file:///postgres-creds/password
+    password: "kd9b39nl3j9;3kd9afekas"
 
 server:
   ingress:
@@ -14,29 +13,12 @@ server:
       - auth-anibase02.chase.ninja
       - auth.anibase02.chase.ninja
       - auth.chase.ninja
-  volumes:
-    - name: postgres-creds
-      secret:
-        secretName: postgres-creds
-  volumeMounts:
-    - name: postgres-creds
-      mountPath: /postgres-creds
-      readOnly: true
 
 postgresql:
   enabled: true
   auth:
-    existingSecret: postgres-creds
+    password: "kd9b39nl3j9;3kd9afekas"
 
 redis:
   enabled: true
 
-worker:
-  volumes:
-    - name: postgres-creds
-      secret:
-        secretName: postgres-creds
-  volumeMounts:
-    - name: postgres-creds
-      mountPath: /postgres-creds
-      readOnly: true
