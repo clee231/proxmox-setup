@@ -3,6 +3,9 @@ ingressRoute:
   dashboard:
     enabled: true
     entryPoints: ["websecure"]
+    matchRule: >-
+              (Host(`traefik-anibase02.chase.ninja`) && PathPrefix(`/dashboard`)) ||
+              (Host(`traefik-anibase02.chase.ninja`) && PathPrefix(`/api`))
 
 service:
   type: NodePort

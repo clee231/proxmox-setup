@@ -1,0 +1,24 @@
+---
+authentik:
+  secret_key: "qSQ:ah^7xRduAFv;9spb5-]6[Vm3nzkKwr&*(}+WDLj%!B?<t{"
+  error_reporting:
+    enabled: true
+  postgresql:
+    password: "kd9b39nl3j9;3kd9afekas"
+
+server:
+  ingress:
+    enabled: true
+    hosts:
+      - auth-anibase02.chase.ninja
+      - auth.anibase02.chase.ninja
+      - auth.chase.ninja
+
+postgresql:
+  enabled: true
+  auth:
+    password: "kd9b39nl3j9;3kd9afekas"
+
+redis:
+  enabled: true
+
