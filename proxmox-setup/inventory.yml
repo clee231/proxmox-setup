@@ -4,9 +4,15 @@ proxmox:
     AniBase02-1:
       ansible_host: 10.0.0.21
       ansible_user: root
+      hispeed_interface_module: i40e
+      hispeed_ip_cidr: 10.10.0.1/32
     AniBase02-2:
       ansible_host: 10.0.0.22
       ansible_user: root
+      hispeed_interface_module: i40e
+      hispeed_ip_cidr: 10.10.0.2/32
     AniBase02-3:
       ansible_host: 10.0.0.23
       ansible_user: root
+      hispeed_interface_module: i40e
+      hispeed_ip_cidr: 10.10.0.3/32
