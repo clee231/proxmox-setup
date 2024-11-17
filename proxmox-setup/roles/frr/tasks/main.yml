@@ -1,0 +1,7 @@
+---
+# tasks file for frr
+- name: Install frr
+  ansible.builtin.apt:
+    name: frr
+    state: present
+    update_cache: yes

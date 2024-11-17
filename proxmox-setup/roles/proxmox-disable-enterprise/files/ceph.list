@@ -1,0 +1,4 @@
+# deb https://enterprise.proxmox.com/debian/ceph-quincy bookworm enterprise
+# deb http://download.proxmox.com/debian/ceph-quincy bookworm no-subscription
+# deb https://enterprise.proxmox.com/debian/ceph-reef bookworm enterprise
+# deb http://download.proxmox.com/debian/ceph-reef bookworm no-subscription

@@ -1,0 +1,63 @@
+---
+# tasks file for proxmox-disable-enterprise
+- name: Correct Proxmox VE Repositories
+  ansible.builtin.copy:
+    src: sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Disable Bookworm Firmware
+  ansible.builtin.copy:
+    src: no-bookworm-firmware.conf
+    dest: /etc/apt/apt.conf.d/no-bookworm-firmware.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Disable Proxmox VE Enterprise Repositories
+  ansible.builtin.copy:
+    src: pve-enterprise.list
+    dest: /etc/apt/sources.list.d/pve-enterprise.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Adding disabled Ceph repositories
+  ansible.builtin.copy:
+    src: ceph.list
+    dest: /etc/apt/sources.list.d/ceph.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Adding disabled PVE Test repositories
+  ansible.builtin.copy:
+    src: pvetest-for-beta.list
+    dest: /etc/apt/sources.list.d/pvetest-for-beta.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Disable Proxmox nag popup
+  ansible.builtin.copy:
+    src: no-nag-script
+    dest: /etc/apt/apt.conf.d/no-nag-script
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Reinstall proxmox-widget-toolkit
+  ansible.builtin.apt:
+    name: proxmox-widget-toolkit
+    state: latest
+    update_cache: yes
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: full

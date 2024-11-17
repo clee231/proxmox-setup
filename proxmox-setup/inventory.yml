@@ -1,0 +1,12 @@
+---
+proxmox:
+  hosts:
+    AniBase02-1:
+      ansible_host: 10.0.0.21
+      ansible_user: root
+    AniBase02-2:
+      ansible_host: 10.0.0.22
+      ansible_user: root
+    AniBase02-3:
+      ansible_host: 10.0.0.23
+      ansible_user: root
