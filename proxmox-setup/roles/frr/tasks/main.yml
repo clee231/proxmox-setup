@@ -16,9 +16,9 @@
       {% endif %}
       {% endfor %}
       ]
-- name: Test net formattting
-  ansible.builtin.debug:
-    msg: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'].split('.') | map | int | '{:04d}'.format() }}"
+- name: Set net fact
+  ansible.builtin.set_fact:
+    net_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'].split('.') | format_list('{:04d}') }}"
 
 - name: Setup FRR config
   ansible.builtin.template:
@@ -26,7 +26,7 @@
     dest: /etc/frr/frr.conf
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   vars:
     ip_cidr: "{{ hispeed_ip_cidr }}"
-    net: "49.0001.1111.1111.1111.00"
+    net: "49.0001.{{net_ip[0]}}.{{net_ip[2]}}.{{net_ip[3]}}.00"
