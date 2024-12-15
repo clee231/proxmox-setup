@@ -16,6 +16,11 @@
       {% endif %}
       {% endfor %}
       ]
+
+- name: Print hispeed_interfaces
+  ansible.builtin.debug:
+    msg: "{{ hispeed_interfaces }}"
+
 - name: Set net fact
   ansible.builtin.set_fact:
     net_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'].split('.') | format_list('{:04d}') }}"
@@ -30,3 +35,30 @@
   vars:
     ip_cidr: "{{ hispeed_ip_cidr }}"
     net: "49.0001.{{net_ip[0]}}.{{net_ip[2]}}.{{net_ip[3]}}.00"
+
+- name: Enable Fabricd daemon in /etc/frr/daemons
+  ansible.builtin.lineinfile:
+    path: /etc/frr/daemons
+    regexp: "^fabricd=no"
+    line: "fabricd=yes"
+    state: present
+
+- name: Remove FRR interfaces from /etc/network/interfaces
+  ansible.builtin.lineinfile:
+    path: /etc/network/interfaces
+    regexp: "iface {{item}} inet manual"
+    state: absent
+  with_items:
+    - "{{hispeed_interfaces}}"
+
+- name: Setup FRR interfaces in /etc/network/interfaces.d/{{item}}
+  ansible.builtin.template:
+    src: hispeed_interfaces_config.j2
+    dest: /etc/network/interfaces.d/{{item}}
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    interface: "{{item}}"
+  with_items:
+    - "{{hispeed_interfaces}}"

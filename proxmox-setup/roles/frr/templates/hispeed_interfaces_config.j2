@@ -1,0 +1,5 @@
+auto {{interface}}
+iface {{interface}} inet static
+        mtu 9000
+
+post-up /usr/bin/systemctl restart frr.service
