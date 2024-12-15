@@ -24,6 +24,14 @@
     group: root
     mode: 0644
 
+- name: Adding no subscription PVE repositories
+  ansible.builtin.copy:
+    src: pve-install-repo.list
+    dest: /etc/apt/sources.list.d/pve-install-repo.list
+    owner: root
+    group: root
+    mode: 0644
+
 - name: Adding disabled Ceph repositories
   ansible.builtin.copy:
     src: ceph.list

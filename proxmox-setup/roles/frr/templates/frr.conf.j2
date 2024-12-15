@@ -9,7 +9,7 @@
 # vtysh to write configuration to a different file.
 
 frr defaults traditional
-hostname {{ template_host }}
+hostname {{ inventory_hostname }}
 log syslog warning
 ip forwarding
 no ipv6 forwarding
