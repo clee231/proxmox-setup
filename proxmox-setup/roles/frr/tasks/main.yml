@@ -62,3 +62,7 @@
     interface: "{{item}}"
   with_items:
     - "{{hispeed_interfaces}}"
+
+- name: Reload networking configuration
+  ansible.builtin.command: ifreload -a
+  changed_when: true
